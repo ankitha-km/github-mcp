@@ -1,0 +1,6 @@
+{
+    "tool": "create_repo",
+    "arguments": {
+        "name": "ai-notes"
+    }
+}

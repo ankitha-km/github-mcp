@@ -1,0 +1,85 @@
+import requests
+import base64
+import json
+import sys
+import os
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+USERNAME = os.getenv("GITHUB_USERNAME")
+
+
+HEADERS = {
+    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github+json"
+}
+
+
+
+# ---------------- TOOLS ---------------- #
+
+def create_repo(name):
+    url = "https://api.github.com/user/repos"
+    data = {"name": name}
+
+    res = requests.post(url, json=data, headers=HEADERS)
+    return res.json()
+
+
+def push_file(repo, path, content, message):
+    url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
+
+    encoded = base64.b64encode(content.encode()).decode()
+
+    data = {
+        "message": message,
+        "content": encoded
+    }
+
+    res = requests.put(url, json=data, headers=HEADERS)
+    return res.json()
+
+
+# ------------- TOOL REGISTRY ------------ #
+
+TOOLS = {
+    "create_repo": create_repo,
+    "push_file": push_file
+}
+
+
+def handle_request(tool_name, args):
+    if tool_name in TOOLS:
+        try:
+            return TOOLS[tool_name](**args)
+        except Exception as e:
+            return {"error": str(e)}
+    return {"error": "Tool not found"}
+
+
+# ------------- MCP LOOP ---------------- #
+
+def main():
+    for line in sys.stdin:
+        try:
+            request = json.loads(line)
+
+            tool = request.get("tool")
+            args = request.get("arguments", {})
+
+            result = handle_request(tool, args)
+
+            print(json.dumps(result))
+            sys.stdout.flush()
+
+        except Exception as e:
+            print(json.dumps({"error": str(e)}))
+            sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    main()

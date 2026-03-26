@@ -1,0 +1,19 @@
+[
+  {
+    "name": "create_repo",
+    "description": "Create a GitHub repository",
+    "parameters": {
+      "name": "string"
+    }
+  },
+  {
+    "name": "push_file",
+    "description": "Push a file to repository",
+    "parameters": {
+      "repo": "string",
+      "path": "string",
+      "content": "string",
+      "message": "string"
+    }
+  }
+]
