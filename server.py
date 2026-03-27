@@ -52,13 +52,7 @@ def push_file(repo, path, content, message):
 
 # ------------- TOOL REGISTRY ------------ #
 
-TOOLS = {
-    "create_repo": create_repo,
-    "push_file": push_file,
-    "list_repos": list_repos,
-    "get_file": get_file
 
-}
 
 
 #list repositories:
@@ -77,9 +71,21 @@ def get_file(repo, path):
     url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
     res = requests.get(url, headers=HEADERS)
 
-    if res.status_code != 201:
+    if res.status_code != 200:
         return {"error": res.json()}
-    return res.json()
+    data = res.json()
+
+    if "content" in data:
+        import base64
+        data["decoded_content"] = base64.b64decode(data["content"]).decode("utf-8")
+    return data
+TOOLS = {
+    "create_repo": create_repo,
+    "push_file": push_file,
+    "list_repos": list_repos,
+    "get_file": get_file
+
+}
 
 
 

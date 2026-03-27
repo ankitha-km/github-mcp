@@ -15,12 +15,12 @@
       "content": "string",
       "message": "string"
     }
-  }
+  },
 
   {
     "name": "list_repos",
     "description": "List all github repositories",
-    "oarameters": {}
+    "parameters": {}
 
   },
 
