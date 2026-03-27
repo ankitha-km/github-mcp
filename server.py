@@ -27,6 +27,9 @@ def create_repo(name):
     data = {"name": name}
 
     res = requests.post(url, json=data, headers=HEADERS)
+
+    if res.status_code != 201:
+        return {"error": res.json()}
     return res.json()
 
 
@@ -41,6 +44,9 @@ def push_file(repo, path, content, message):
     }
 
     res = requests.put(url, json=data, headers=HEADERS)
+
+    if res.status_code != 201:
+        return {"error": res.json()}
     return res.json()
 
 
@@ -59,6 +65,9 @@ TOOLS = {
 def list_repos():
     url = "https://api.github.com/user/repos"
     res = requests.get(url, headers=HEADERS)
+
+    if res.status_code != 201:
+        return {"error": res.json()}
     return res.json()
 
 
@@ -67,6 +76,9 @@ def list_repos():
 def get_file(repo, path):
     url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
     res = requests.get(url, headers=HEADERS)
+
+    if res.status_code != 201:
+        return {"error": res.json()}
     return res.json()
 
 
