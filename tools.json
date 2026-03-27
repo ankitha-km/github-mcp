@@ -16,4 +16,20 @@
       "message": "string"
     }
   }
+
+  {
+    "name": "list_repos",
+    "description": "List all github repositories",
+    "oarameters": {}
+
+  },
+
+  {
+    "name": "get_file",
+    "descritpion": "Get file content from repo",
+    "parameters": {
+      "repo": "string",
+      "path": "string"
+    }
+  }
 ]

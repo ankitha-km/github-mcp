@@ -48,8 +48,27 @@ def push_file(repo, path, content, message):
 
 TOOLS = {
     "create_repo": create_repo,
-    "push_file": push_file
+    "push_file": push_file,
+    "list_repos": list_repos,
+    "get_file": get_file
+
 }
+
+
+#list repositories:
+def list_repos():
+    url = "https://api.github.com/user/repos"
+    res = requests.get(url, headers=HEADERS)
+    return res.json()
+
+
+#read file from repo
+
+def get_file(repo, path):
+    url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
+    res = requests.get(url, headers=HEADERS)
+    return res.json()
+
 
 
 def handle_request(tool_name, args):
