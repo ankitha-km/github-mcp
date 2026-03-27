@@ -31,5 +31,21 @@
       "repo": "string",
       "path": "string"
     }
-  }
+  },
+  
+  {
+    "name": "check_repo",
+    "description": "Check if a specific GitHub repository exists",
+    "parameters": {
+      "name": "string"
+    }
+  },
+  {
+    "name": "list_files",
+    "description": "List all files in a GitHub repository",
+    "parameters": {
+        "repo": "string",
+        "path": "string"
+    }
+}
 ]

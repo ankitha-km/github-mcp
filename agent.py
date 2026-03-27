@@ -1,6 +1,7 @@
 import subprocess
 import json
 import os
+import re
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -16,7 +17,6 @@ process = subprocess.Popen(
     text=True
 )
 
-# ✅ Memory — stores full conversation history
 conversation_history = []
 
 def call_tool(tool_name, args):
@@ -25,10 +25,25 @@ def call_tool(tool_name, args):
     process.stdin.flush()
     return json.loads(process.stdout.readline())
 
+def pretty_print(result):
+    if isinstance(result, dict):
+        if result.get("exists") is not None:
+            status = "✅ exists" if result["exists"] else "❌ not found"
+            print(f"Agent: Repo '{result['name']}' {status}")
+        elif "decoded_content" in result:
+            print(f"Agent: File content:\n{result['decoded_content']}")
+        else:
+            print("Agent:", json.dumps(result, indent=2))
+    elif isinstance(result, list):
+        print("Agent: Files found:")
+        for f in result:
+            print(f"  - {f['name']} ({f['type']}, {f['size']} bytes)")
+    else:
+        print("Agent:", result)
+
 def run_agent(user_message):
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-    # ✅ Add user message to history
     conversation_history.append({
         "role": "user",
         "content": user_message
@@ -41,39 +56,51 @@ def run_agent(user_message):
                 "role": "system",
                 "content": f"""You are an assistant that manages GitHub repos.
 You have access to these tools: {json.dumps(tools_schema)}
-When the user asks something, respond ONLY with a JSON object like:
-{{"tool": "tool_name", "arguments": {{}}}}
-If no tool is needed, respond normally in plain text.
-Use context from previous messages to fill in missing details.
-For example if user says 'push a file to it', figure out which repo from history."""
+IMPORTANT: When you need to call a tool, respond with ONLY a JSON object — no explanation, no extra text.
+Just the raw JSON like: {{"tool": "tool_name", "arguments": {{}}}}
+Only respond in plain text if no tool is needed."""
             },
-            *conversation_history  # ✅ send full history every time
+            *conversation_history
         ]
     )
 
     reply = response.choices[0].message.content.strip()
     print("LLM picked:", reply)
 
-    # ✅ Add assistant reply to history
     conversation_history.append({
         "role": "assistant",
         "content": reply
     })
 
+    # Try direct JSON parse
     try:
         action = json.loads(reply)
         result = call_tool(action["tool"], action["arguments"])
-
-        # ✅ Also store the tool result so LLM knows what happened
         conversation_history.append({
             "role": "user",
-            "content": f"Tool result: {json.dumps(result)[:500]}"  # truncate to avoid huge history
+            "content": f"Tool result: {json.dumps(result)[:500]}"
         })
-
         return result
-    except Exception as e:
-        return reply
+    except:
+        pass
 
+    # Fallback: extract JSON from mixed text
+    match = re.search(r'\{.*"tool".*\}', reply, re.DOTALL)
+    if match:
+        try:
+            action = json.loads(match.group())
+            result = call_tool(action["tool"], action["arguments"])
+            conversation_history.append({
+                "role": "user",
+                "content": f"Tool result: {json.dumps(result)[:500]}"
+            })
+            return result
+        except Exception as e:
+            print("Error:", e)
+
+    return reply
+
+# ✅ Simple chat loop — NO sys.stdin, NO main()
 print("Agent ready! Type 'exit' to quit, 'history' to see memory.\n")
 
 while True:
@@ -89,4 +116,4 @@ while True:
         continue
 
     result = run_agent(user_input)
-    print("Agent:", json.dumps(result, indent=2) if isinstance(result, dict) else result)
+    pretty_print(result)
