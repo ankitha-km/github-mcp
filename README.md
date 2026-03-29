@@ -1,0 +1,39 @@
+#MCP GitHub Assistant
+
+MCP - Model Context Protocol
+ - mcp is a standard way for ai models to connect with tools,data and systems.
+
+ - connector between ai and outside world.
+ -bridge tahat ai lets talk to apps, files and services.
+
+ normally ai cant access files, apps,services, mcp solves this issue -
+      > one standard
+      > plug anyhting easily
+      > reusable connections
+
+      working:
+
+      user->ai->mcp->tool->response
+
+      user ->claude(ai)-> mcp client-> mcp server-> github api
+
+
+
+      ## Features:
+       >create GitHub repositories using 
+       >Push files to repositories
+       >list repositories
+       >Read files from repositories
+
+      ##setup
+
+      1.install dependencies:
+      pip install -r requirements.txt
+
+      2. set github token:
+      export GITHUB_TOKEN+your_token_here
+
+      3. run:
+      python server.py
+
+      

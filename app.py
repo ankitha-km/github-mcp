@@ -41,6 +41,7 @@ def run_agent(user_message):
                 "content": f"""You are an assistant that manages GitHub repos.
 You have access to these tools: {json.dumps(tools_schema)}
 IMPORTANT RULES:
+- Use the EXACT repo name the user typed — never guess, correct, or substitute it.
 - If ONE action needed: {{"tool": "tool_name", "arguments": {{}}}}
 - If MULTIPLE actions needed: [{{"tool": "t1", "arguments": {{}}}}, {{"tool": "t2", "arguments": {{}}}}]
 - NEVER put each JSON on a separate line — always use a single array.
@@ -171,7 +172,6 @@ HTML = """
     <button onclick="send('check if test-repo exists')">check repo</button>
     <button onclick="send('list files in test-repo')">list files</button>
   </div>
-
   <footer>
     <input id="input" placeholder="Ask me anything about your GitHub repos..." onkeydown="if(event.key==='Enter') send()"/>
     <button id="send" onclick="send()">Send</button>
@@ -234,4 +234,3 @@ def chat():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-    
