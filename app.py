@@ -112,6 +112,12 @@ def format_result(tool, result):
             return f"❌ Repo **{result['name']}** not found"
         if "decoded_content" in result:
             return f"📄 **{result.get('name', 'file')}**:\n```\n{result['decoded_content']}\n```"
+        
+        if "content" in result and "commit" in result:
+            name = result["content"]["name"]
+            url = result["content"]["html_url"]
+            sha = result["commit"]["sha"][:7]
+            return f"✅ **{name}** pushed successfully! [view on GitHub]({url}) — commit `{sha}`"
         if "html_url" in result:
             return f"✅ Done! [{result['name']}]({result['html_url']})"
         if "error" in result:
@@ -166,12 +172,12 @@ HTML = """
     <div class="msg agent">Hey! I'm your GitHub agent. Ask me anything — create repos, push files, list your projects...</div>
   </div>
 
-  <div class="quick">
-    <button onclick="send('list all my repos')">list repos</button>
-    <button onclick="send('create a repo called test-web')">create repo</button>
-    <button onclick="send('check if test-repo exists')">check repo</button>
-    <button onclick="send('list files in github-mcp')">list files</button>
-  </div>
+<div class="quick">
+  <button onclick="send('list all my repos')">list repos</button>
+  <button onclick="send('create a repo called test-web')">create repo</button>
+  <button onclick="send('check if test-repo exists')">check repo</button>
+  <button onclick="send('list files in github-mcp')">list files</button>
+</div>
   <footer>
     <input id="input" placeholder="Ask me anything about your GitHub repos..." onkeydown="if(event.key==='Enter') send()"/>
     <button id="send" onclick="send()">Send</button>

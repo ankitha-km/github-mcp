@@ -25,8 +25,19 @@ def create_repo(name):
 def push_file(repo, path, content, message):
     url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
     encoded = base64.b64encode(content.encode()).decode()
-    res = requests.put(url, json={"message": message, "content": encoded}, headers=HEADERS)
-    if res.status_code != 201:
+    
+    data = {
+        "message": message,
+        "content": encoded
+    }
+
+    existing = requests.get(url, headers=HEADERS)
+    if existing.status_code == 200:
+        data["sha"] = existing.json()["sha"]
+
+    res = requests.put(url, json=data, headers=HEADERS)
+    
+    if res.status_code not in [200, 201]:
         return {"error": res.json()}
     return res.json()
 
