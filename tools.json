@@ -47,5 +47,33 @@
         "repo": "string",
         "path": "string"
     }
+},
+{
+    "name": "rename_file",
+    "description": "Rename a file in a GitHub repository",
+    "parameters": {
+        "repo": "string",
+        "old_path": "string",
+        "new_path": "string",
+        "message": "string"
+    }
+},
+{
+    "name": "edit_file",
+    "description": "Edit or update the content of a file in a GitHub repository",
+    "parameters": {
+        "repo": "string",
+        "path": "string",
+        "new_content": "string",
+        "message": "string"
+    }
+},
+{
+    "name": "rename_repo",
+    "description": "Rename a GitHub repository",
+    "parameters": {
+        "old_name": "string",
+        "new_name": "string"
+    }
 }
 ]

@@ -45,6 +45,7 @@ IMPORTANT RULES:
 - If ONE action needed: {{"tool": "tool_name", "arguments": {{}}}}
 - If MULTIPLE actions needed: [{{"tool": "t1", "arguments": {{}}}}, {{"tool": "t2", "arguments": {{}}}}]
 - NEVER put each JSON on a separate line — always use a single array.
+- When editing a file, pass ONLY the new content the user specified — never add extra characters.
 - NO extra text — ONLY JSON. Only plain text if no tool needed."""
             },
             *conversation_history
@@ -113,6 +114,11 @@ def format_result(tool, result):
         if "decoded_content" in result:
             return f"📄 **{result.get('name', 'file')}**:\n```\n{result['decoded_content']}\n```"
         
+        if result.get("renamed") is True:
+            if "url" in result:
+                return f"✅ Repo renamed from **{result['from']}** to **{result['to']}** — {result['url']}"
+            return f"✅ File renamed from **{result['from']}** to **{result['to']}**"  # ✅ indented inside if block
+
         if "content" in result and "commit" in result:
             name = result["content"]["name"]
             url = result["content"]["html_url"]
@@ -156,7 +162,7 @@ HTML = """
     #send { background: #238636; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; }
     #send:hover { background: #2ea043; }
     .typing { align-self: flex-start; color: #8b949e; font-size: 13px; }
-    .quick { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 24px 12px; }
+    .quick { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 24px 12px; }   
     .quick button { background: #161b22; border: 1px solid #30363d; color: #8b949e; border-radius: 16px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
     .quick button:hover { border-color: #58a6ff; color: #58a6ff; }
     #upload-panel { display: none; }

@@ -93,7 +93,88 @@ def get_file(repo, path):
     return data
 
 
+def rename_file(repo, old_path, new_path, message="renamed file"):
+    # get file content + sha first
+    url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{old_path}"
+    res = requests.get(url, headers=HEADERS)
+    if res.status_code != 200:
+        return {"error": res.json()}
+    
+    data = res.json()
+    content = data["content"]  # already base64
+    sha = data["sha"]
 
+    # create new file
+    new_url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{new_path}"
+    create_res = requests.put(new_url, json={
+        "message": message,
+        "content": content
+    }, headers=HEADERS)
+    
+    if create_res.status_code != 201:
+        return {"error": create_res.json()}
+
+    # delete old file
+    delete_res = requests.delete(url, json={
+        "message": f"deleted {old_path} after rename",
+        "sha": sha
+    }, headers=HEADERS)
+
+    return {"renamed": True, "from": old_path, "to": new_path}
+
+
+def edit_file(repo, path, new_content, message="updated file"):
+    url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
+    
+    # get current sha
+    res = requests.get(url, headers=HEADERS)
+    
+    # try case-insensitive match if 404
+    if res.status_code == 404:
+        root = requests.get(
+            f"https://api.github.com/repos/{USERNAME}/{repo}/contents/",
+            headers=HEADERS
+        )
+        if root.status_code == 200:
+            for f in root.json():
+                if f["name"].lower() == path.lower():
+                    url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{f['name']}"
+                    res = requests.get(url, headers=HEADERS)
+                    break
+
+    if res.status_code != 200:
+        return {"error": res.json()}
+
+    sha = res.json()["sha"]
+    encoded = base64.b64encode(new_content.encode()).decode()
+
+    update_res = requests.put(url, json={
+        "message": message,
+        "content": encoded,
+        "sha": sha
+    }, headers=HEADERS)
+
+    if update_res.status_code not in [200, 201]:
+        return {"error": update_res.json()}
+
+    data = update_res.json()
+    return {
+        "content": data["content"],
+        "commit": data["commit"]
+    }
+
+
+def rename_repo(old_name, new_name):
+    url = f"https://api.github.com/repos/{USERNAME}/{old_name}"
+    res = requests.patch(url, json={"name": new_name}, headers=HEADERS)
+    if res.status_code != 200:
+        return {"error": res.json()}
+    return {
+        "renamed": True,
+        "from": old_name,
+        "to": new_name,
+        "url": res.json()["html_url"]
+    }
 
 
 
@@ -112,7 +193,10 @@ TOOLS = {
     "check_repo": check_repo,
     "list_repos": list_repos,
     "get_file": get_file,
-    "list_files": list_files    # ✅ added
+    "list_files": list_files,  
+    "rename_file": rename_file,  
+    "edit_file": edit_file,       
+    "rename_repo": rename_repo,
 }
 
 def handle_request(tool_name, args):
