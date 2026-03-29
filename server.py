@@ -50,12 +50,42 @@ def list_repos():
 def get_file(repo, path):
     url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
     res = requests.get(url, headers=HEADERS)
+    
+    if res.status_code == 404 and path:
+        root_url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/"
+        root_res = requests.get(root_url, headers=HEADERS)
+        
+        if root_res.status_code == 200:
+            files = root_res.json()
+            for f in files:
+                if f["name"].lower() == path.lower():
+                    correct_url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{f['name']}"
+                    res = requests.get(correct_url, headers=HEADERS)
+                    break
+            else:
+                
+                return [{"name": f["name"], "type": f["type"], "size": f["size"]} for f in files]
+
     if res.status_code != 200:
         return {"error": res.json()}
+
     data = res.json()
+
+    
+    if isinstance(data, list):
+        return [{"name": f["name"], "type": f["type"], "size": f["size"]} for f in data]
+
+    
     if "content" in data:
         data["decoded_content"] = base64.b64decode(data["content"]).decode("utf-8")
+
     return data
+
+
+
+
+
+
 
 def list_files(repo, path=""):
     url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"

@@ -1,3 +1,4 @@
+#bulk automation script  for terminal version
 import subprocess
 import json
 

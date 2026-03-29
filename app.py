@@ -170,7 +170,7 @@ HTML = """
     <button onclick="send('list all my repos')">list repos</button>
     <button onclick="send('create a repo called test-web')">create repo</button>
     <button onclick="send('check if test-repo exists')">check repo</button>
-    <button onclick="send('list files in test-repo')">list files</button>
+    <button onclick="send('list files in github-mcp')">list files</button>
   </div>
   <footer>
     <input id="input" placeholder="Ask me anything about your GitHub repos..." onkeydown="if(event.key==='Enter') send()"/>
