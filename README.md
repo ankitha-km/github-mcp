@@ -20,10 +20,17 @@ MCP - Model Context Protocol
 
 
       ## Features:
-       >create GitHub repositories using 
+       >create GitHub repositories 
        >Push files to repositories
-       >list repositories
+       >list repositories and files
        >Read files from repositories
+       >read file content
+       >check if repo exists or not
+       >multi-tool calling
+       >conversation memory
+       >web UI with quick buttons
+       >smart file search ( case insensitive)
+       >clean success/error messages
 
       ##setup
 

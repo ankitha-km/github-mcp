@@ -159,6 +159,8 @@ HTML = """
     .quick { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 24px 12px; }
     .quick button { background: #161b22; border: 1px solid #30363d; color: #8b949e; border-radius: 16px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
     .quick button:hover { border-color: #58a6ff; color: #58a6ff; }
+    #upload-panel { display: none; }
+    #upload-panel.open { display: flex !important; }
   </style>
 </head>
 <body>
@@ -177,7 +179,26 @@ HTML = """
   <button onclick="send('create a repo called test-web')">create repo</button>
   <button onclick="send('check if test-repo exists')">check repo</button>
   <button onclick="send('list files in github-mcp')">list files</button>
+  <button onclick="toggleUpload()">upload file</button>
+
 </div>
+
+
+<div id="upload-panel" style="padding: 10px 24px; background:#161b22; border-top: 1px solid #30363d; border-bottom: 1px solid #30363d; flex-direction: row; gap: 8px; align-items: center; flex-wrap: wrap;">
+  <input type="text" id="upload-repo" placeholder="repo name e.g. github-mcp"
+    style="background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:8px 12px; color:#e6edf3; font-size:13px; width:200px; outline:none;"/>
+  <input type="file" id="upload-file" multiple
+    style="color:#8b949e; font-size:13px;"/>
+  <button onclick="uploadFiles()"
+    style="background:#238636; color:#fff; border:none; border-radius:8px; padding:8px 16px; font-size:13px; cursor:pointer;">
+    Push to GitHub
+  </button>
+  <button onclick="toggleUpload()"
+    style="background:transparent; color:#8b949e; border:1px solid #30363d; border-radius:8px; padding:8px 12px; font-size:13px; cursor:pointer;">
+    cancel
+  </button>
+</div>
+
   <footer>
     <input id="input" placeholder="Ask me anything about your GitHub repos..." onkeydown="if(event.key==='Enter') send()"/>
     <button id="send" onclick="send()">Send</button>
@@ -206,6 +227,11 @@ HTML = """
     chat.scrollTop = chat.scrollHeight;
   }
 
+  function toggleUpload() {
+    const panel = document.getElementById('upload-panel');
+    panel.classList.toggle('open');
+  }
+
   async function send(text) {
     const msg = text || input.value.trim();
     if (!msg) return;
@@ -222,6 +248,41 @@ HTML = """
     document.getElementById('typing')?.remove();
     addMsg(data.reply, 'agent');
   }
+
+async function uploadFiles() {
+  const repo = document.getElementById('upload-repo').value.trim();
+  const files = document.getElementById('upload-file').files;
+
+  if (!repo) {
+    addMsg('❌ Please enter a repo name', 'agent');
+    return;
+  }
+  if (files.length === 0) {
+    addMsg('❌ Please select at least one file', 'agent');
+    return;
+  }
+
+  document.getElementById('upload-panel').style.display = 'none';
+
+  for (const file of files) {
+    addMsg(`Uploading ${file.name} to ${repo}...`, 'user');
+    addTyping();
+
+    const formData = new FormData();
+    formData.append('repo', repo);
+    formData.append('file', file);
+
+    const res = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    document.getElementById('typing')?.remove();
+    addMsg(data.reply, 'agent');
+  }
+}
+
+
 </script>
 </body>
 </html>
@@ -237,6 +298,27 @@ def chat():
     user_message = data.get('message', '')
     reply = run_agent(user_message)
     return jsonify({"reply": reply})
+
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    repo = request.form.get('repo')
+    file = request.files.get('file')
+
+    if not file or not repo:
+        return jsonify({"reply": "Missing file or repo name"})
+    
+    filename = file.filename
+    content = file.read().decode('utf-8', errors='replace')
+
+    result = call_tool("push_file", {
+        "repo": repo,
+        "path": filename,
+        "content": content,
+        "message": f"uploaded {filename} via MCP agent"
+    })
+
+    return jsonify({"reply": format_result("push_file", result)})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
