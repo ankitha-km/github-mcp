@@ -76,4 +76,29 @@
         "new_name": "string"
     }
 }
+{
+    "name": "delete_file",
+    "description": "Delete a file from a GitHub repository",
+    "parameters": {
+        "repo": "string",
+        "path": "string",
+        "message": "string"
+    }
+},
+{
+    "name": "delete_repo",
+    "description": "Delete a GitHub repository permanently",
+    "parameters": {
+        "name": "string"
+    }
+},
+{
+    "name": "create_branch",
+    "description": "Create a new branch in a GitHub repository",
+    "parameters": {
+        "repo": "string",
+        "branch_name": "string",
+        "from_branch": "string"
+    }
+}
 ]

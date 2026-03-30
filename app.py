@@ -113,12 +113,16 @@ def format_result(tool, result):
             return f"❌ Repo **{result['name']}** not found"
         if "decoded_content" in result:
             return f"📄 **{result.get('name', 'file')}**:\n```\n{result['decoded_content']}\n```"
-        
         if result.get("renamed") is True:
             if "url" in result:
                 return f"✅ Repo renamed from **{result['from']}** to **{result['to']}** — {result['url']}"
-            return f"✅ File renamed from **{result['from']}** to **{result['to']}**"  # ✅ indented inside if block
-
+            return f"✅ File renamed from **{result['from']}** to **{result['to']}**"
+        if result.get("deleted") is True:        # ✅ moved here inside dict block
+            if "file" in result:
+                return f"🗑️ File **{result['file']}** deleted from **{result['repo']}**"
+            return f"🗑️ Repo **{result['repo']}** deleted permanently"
+        if result.get("created") is True and "branch" in result:   # ✅ moved here
+            return f"🌿 Branch **{result['branch']}** created in **{result['repo']}** from **{result['from']}**"
         if "content" in result and "commit" in result:
             name = result["content"]["name"]
             url = result["content"]["html_url"]
@@ -255,38 +259,32 @@ HTML = """
     addMsg(data.reply, 'agent');
   }
 
-async function uploadFiles() {
+  async function uploadFiles() {
   const repo = document.getElementById('upload-repo').value.trim();
   const files = document.getElementById('upload-file').files;
 
-  if (!repo) {
-    addMsg('❌ Please enter a repo name', 'agent');
-    return;
-  }
-  if (files.length === 0) {
-    addMsg('❌ Please select at least one file', 'agent');
-    return;
-  }
+  if (!repo) { addMsg('❌ Please enter a repo name', 'agent'); return; }
+  if (files.length === 0) { addMsg('❌ Please select files', 'agent'); return; }
 
-  document.getElementById('upload-panel').style.display = 'none';
+  toggleUpload();
+  addMsg(`Uploading ${files.length} file(s) to ${repo}...`, 'user');
+  addTyping();
 
+  const formData = new FormData();
+  formData.append('repo', repo);
   for (const file of files) {
-    addMsg(`Uploading ${file.name} to ${repo}...`, 'user');
-    addTyping();
-
-    const formData = new FormData();
-    formData.append('repo', repo);
-    formData.append('file', file);
-
-    const res = await fetch('/upload', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-    document.getElementById('typing')?.remove();
-    addMsg(data.reply, 'agent');
+    formData.append('files', file, file.webkitRelativePath || file.name);
   }
+
+  const res = await fetch('/upload-folder', {
+    method: 'POST',
+    body: formData
+  });
+  const data = await res.json();
+  document.getElementById('typing')?.remove();
+  data.results.forEach(r => addMsg(r, 'agent'));
 }
+
 
 
 </script>
@@ -306,25 +304,27 @@ def chat():
     return jsonify({"reply": reply})
 
 
-@app.route('/upload', methods=['POST'])
-def upload():
+@app.route('/upload-folder', methods=['POST'])
+def upload_folder():
     repo = request.form.get('repo')
-    file = request.files.get('file')
+    files = request.files.getlist('files')
 
-    if not file or not repo:
-        return jsonify({"reply": "Missing file or repo name"})
-    
-    filename = file.filename
-    content = file.read().decode('utf-8', errors='replace')
+    if not files or not repo:
+        return jsonify({"results": ["❌ Missing files or repo name"]})
 
-    result = call_tool("push_file", {
-        "repo": repo,
-        "path": filename,
-        "content": content,
-        "message": f"uploaded {filename} via MCP agent"
-    })
+    results = []
+    for file in files:
+        filename = file.filename
+        content = file.read().decode('utf-8', errors='replace')
+        result = call_tool("push_file", {
+            "repo": repo,
+            "path": filename,
+            "content": content,
+            "message": f"uploaded {filename} via MCP agent"
+        })
+        results.append(format_result("push_file", result))
 
-    return jsonify({"reply": format_result("push_file", result)})
+    return jsonify({"results": results})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

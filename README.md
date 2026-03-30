@@ -31,6 +31,11 @@ MCP - Model Context Protocol
        >web UI with quick buttons
        >smart file search ( case insensitive)
        >clean success/error messages
+       >uploading file to existing repo
+       >deleting repo
+       >pushing entire folder at once
+       >create branches
+       
 
       ##setup
 
@@ -41,6 +46,6 @@ MCP - Model Context Protocol
       export GITHUB_TOKEN+your_token_here
 
       3. run:
-      python server.py
+      python server.py // this is in terminal 
 
       

@@ -177,6 +177,52 @@ def rename_repo(old_name, new_name):
     }
 
 
+def delete_file(repo, path, message="deleted file"):
+    url = f"https://api.github.com/repos/{USERNAME}/{repo}/contents/{path}"
+    res = requests.get(url, headers=HEADERS)
+    if res.status_code != 200:
+        return {"error": res.json()}
+    sha = res.json()["sha"]
+    delete_res = requests.delete(url, json={
+        "message": message,
+        "sha": sha
+    }, headers=HEADERS)
+    if delete_res.status_code != 200:
+        return {"error": delete_res.json()}
+    return {"deleted": True, "file": path, "repo": repo}
+
+
+def delete_repo(name):
+    url = f"https://api.github.com/repos/{USERNAME}/{name}"
+    res = requests.delete(url, headers=HEADERS)
+    if res.status_code != 204:
+        return {"error": res.json()}
+    return {"deleted": True, "repo": name}
+
+
+def create_branch(repo, branch_name, from_branch="main"):
+    # get sha of base branch
+    url = f"https://api.github.com/repos/{USERNAME}/{repo}/git/ref/heads/{from_branch}"
+    res = requests.get(url, headers=HEADERS)
+    if res.status_code != 200:
+        return {"error": res.json()}
+    sha = res.json()["object"]["sha"]
+
+    # create new branch
+    create_url = f"https://api.github.com/repos/{USERNAME}/{repo}/git/refs"
+    create_res = requests.post(create_url, json={
+        "ref": f"refs/heads/{branch_name}",
+        "sha": sha
+    }, headers=HEADERS)
+    if create_res.status_code != 201:
+        return {"error": create_res.json()}
+    return {
+        "created": True,
+        "branch": branch_name,
+        "repo": repo,
+        "from": from_branch
+    }
+
 
 
 def list_files(repo, path=""):
@@ -197,6 +243,9 @@ TOOLS = {
     "rename_file": rename_file,  
     "edit_file": edit_file,       
     "rename_repo": rename_repo,
+    "delete_file": delete_file,
+    "delete_repo": delete_repo,
+    "create_branch": create_branch
 }
 
 def handle_request(tool_name, args):
