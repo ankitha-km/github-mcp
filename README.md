@@ -33,8 +33,8 @@ MCP - Model Context Protocol
        >clean success/error messages
        >uploading file to existing repo
        >deleting repo
-       >pushing entire folder at once
-       >create branches
+       
+       
        
 
       ##setup
