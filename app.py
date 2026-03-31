@@ -260,30 +260,30 @@ HTML = """
   }
 
   async function uploadFiles() {
-  const repo = document.getElementById('upload-repo').value.trim();
-  const files = document.getElementById('upload-file').files;
+    const repo = document.getElementById('upload-repo').value.trim();
+    const files = document.getElementById('upload-file').files;
 
-  if (!repo) { addMsg('❌ Please enter a repo name', 'agent'); return; }
-  if (files.length === 0) { addMsg('❌ Please select files', 'agent'); return; }
+    if (!repo) { addMsg('❌ Please enter a repo name', 'agent'); return; }
+    if (files.length === 0) { addMsg('❌ Please select files', 'agent'); return; }
 
-  toggleUpload();
-  addMsg(`Uploading ${files.length} file(s) to ${repo}...`, 'user');
-  addTyping();
+    toggleUpload();
+    addMsg(`Uploading ${files.length} file(s) to ${repo}...`, 'user');
+    addTyping();
 
-  const formData = new FormData();
-  formData.append('repo', repo);
-  for (const file of files) {
-    formData.append('files', file, file.webkitRelativePath || file.name);
+    const formData = new FormData();
+    formData.append('repo', repo);
+    for (const file of files) {
+      formData.append('files', file, file.webkitRelativePath || file.name);
+    }
+
+    const res = await fetch('/upload-folder', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    document.getElementById('typing')?.remove();
+    data.results.forEach(r => addMsg(r, 'agent'));
   }
-
-  const res = await fetch('/upload-folder', {
-    method: 'POST',
-    body: formData
-  });
-  const data = await res.json();
-  document.getElementById('typing')?.remove();
-  data.results.forEach(r => addMsg(r, 'agent'));
-}
 
 
 
@@ -327,4 +327,5 @@ def upload_folder():
     return jsonify({"results": results})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
